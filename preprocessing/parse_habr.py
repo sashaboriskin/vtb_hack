@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-
+	
 def clear_rubric(rubrics: list) -> list:
     bad_symbols = ['*']
     clear_rubric = rubrics[:] 
@@ -21,33 +21,47 @@ def get_date(date_soup: str) -> list:
     return [date, time]
 
 
-def add_new_row_to_df(url: str, rubric:str) -> dict:
+def add_new_row_to_df(url: str, rubric: str) -> dict:
     test_responce = requests.get(url)
     soup = BeautifulSoup(test_responce.text, 'lxml')
-    views = int(soup.find('span', class_='tm-icon-counter__value').get_text())
+    try:
+    	views = int(soup.find('span', class_='tm-icon-counter__value').get_text())
+    except ValueError:
+        if 'K' in soup.find('span', class_='tm-icon-counter__value').get_text(): 
+            views = float(soup.find('span', class_='tm-icon-counter__value').get_text()[:-1])*1000
     id = int(url[25:-1])
     date = get_date(soup.find('span', class_='tm-article-snippet__datetime-published'))
     text = [string.get_text() for string in soup.find_all('p')]
     title = soup.find('h1', class_='tm-article-snippet__title tm-article-snippet__title_h1').find('span').get_text()
     #rubric = clear_rubric([string.get_text() for string in soup.find_all('span', 'tm-article-snippet__hubs-item')])
     new_row = {'id': id,
+	       'sourse': 'habr', 
                'views': views,
                'title': title, 
                'date': date[0],
                'time': date[1],
-               #'rubrics': rubric,
+               'rubrics': rubric,
                'text': text}
     return new_row
 
 
+def add_link_to_df(df: pd.DataFrame, url: str, role: str) -> pd.DataFrame:
+    all_pages = requests.get(url)
+    soup = BeautifulSoup(all_pages.text, 'lxml')
+    links = []
+    for link in soup.find_all('a', class_='tm-article-snippet__title-link'):
+        if 'post' in link.get('href'):
+            links.append('https://habr.com' + link.get('href')) 
 
-habr_df = pd.DataFrame(columns=['id', 'views', 'title', 'date', 'time', 'rubrics', 'text'])
+    for link in links:
+        df = df.append(add_new_row_to_df(link, role), ignore_index=True)
+    return df
 
-url = 'https://habr.com/develop/'
-all_pages = requests.get(url)
-soup = BeautifulSoup(all_pages.text, 'lxml')
-#links = []
-# for link in soup.find_all('a', class_='tm-article-snippet__title-link'):
-#     print(link.get('href'))
-links = soup.find_all('div', class_='tm-article-snippet')
-print(links)
+habr_df = pd.DataFrame(columns=['id', 'sourse' , 'views', 'title', 'date', 'time', 'rubrics', 'text'])
+develop_url = 'https://habr.com/ru/flows/develop/'
+business_url = 'https://habr.com/ru/flows/marketing/'
+habr_df = add_link_to_df(habr_df, develop_url, 'develop')
+habr_df = add_link_to_df(habr_df, business_url, 'business')
+
+print(habr_df)
+#habr_df.to_csv("C:\\Users\\sasha\\PycharmProjects\\vtb_hack2\\data\\habr.csv")  
