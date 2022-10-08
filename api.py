@@ -21,4 +21,5 @@ def recommend_news(df: pd.DataFrame, role: str) -> list:
 
 
 habr_df = pd.read_csv("C:\\Users\\sasha\\PycharmProjects\\vtb_hack2\\data\\habr.csv", index_col=0)
-print(recommend_news(habr_df, 'develop'))
+role = input("Input the business role: ")
+print(recommend_news(habr_df, role))
