@@ -1,7 +1,6 @@
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-import tqdm
 	
 def clear_rubric(rubrics: list) -> list:
     bad_symbols = ['*']
@@ -68,6 +67,14 @@ def add_link_to_df(df: pd.DataFrame, url: str, role: str) -> pd.DataFrame:
         df = df.append(add_new_row_to_df(link, role), ignore_index=True)
     return df
 
+def normalize_date(date: str) -> list:
+    new_list = date.split('-')
+    return new_list
+
+
+def normalize_time(time: str) -> int:
+    new_list = time.split(':')
+    return int(new_list[0]) * 60 * 60 + int(new_list[1]) * 60
 
 
 habr_df = pd.DataFrame(columns=['id', 'link','sourse', 'views', 'title', 'date', 'time', 'rubrics', 'text'])
@@ -84,5 +91,21 @@ for i in range(2, 151):
     habr_df = add_link_to_df(habr_df, next_page_develop_url, 'develop')
     habr_df = add_link_to_df(habr_df, next_page_business_url, 'business')
 
-print(habr_df.head())
-habr_df.to_csv("C:\\Users\\sasha\\PycharmProjects\\vtb_hack2\\data\\habr.csv")  
+#habr_df.to_csv("C:\\Users\\sasha\\PycharmProjects\\vtb_hack2\\data\\habr.csv")  
+dates_series = habr_df['date']
+list_of_secs = []
+for i in range(len(habr_df)):
+    list_of_secs.append(normalize_time(str(habr_df['time'][i])))
+
+
+habr_df['year'] = pd.Series(normalize_date(str(habr_df['date']))[0][1:], index=habr_df.index)
+habr_df['month'] = pd.Series(normalize_date(str(habr_df['date']))[1], index=habr_df.index)
+habr_df['day'] = pd.Series(normalize_date(str(habr_df['date']))[2][:2], index=habr_df.index)
+habr_df['seconds'] = pd.Series(list_of_secs, index=habr_df.index)
+del habr_df['date']
+del habr_df['time']
+habr_df['rubrics'] = habr_df['rubrics'].map({'develop': 1, 'business': 0})
+for i in range(len(habr_df)):
+    habr_df['text'][i] = habr_df['text'][i][2:-2]
+habr_df.to_csv('C:\\Users\\sasha\\PycharmProjects\\vtb_hack2\\data\\habr_preprocessed.csv')
+

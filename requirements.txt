@@ -2,4 +2,5 @@ requests
 beautifulsoup4
 numpy
 pandas
-numpy
+sklearn
+catboost
