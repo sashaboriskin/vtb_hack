@@ -1,11 +1,11 @@
 # vtb_hack
 More Tech 4 hack solution 
 
-Our 2 business roles are project manager and product manager
+Our 2 business roles are business owners and directors
 
-We recommend IT news to project managers 
+We recommend IT news to directors
 
-We recommend buisness and economics news to product managers
+We recommend buisness and economics news to business owners
 
 To have recomendations you should:
 
